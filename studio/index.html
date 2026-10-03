@@ -96,6 +96,40 @@ async function charger(){
 }
 
 function editeur(it){
+  if(!etat.direct_autorise || etat.mode === 'brouillon') return editeurBrouillon(it);
+  editeurDirect(it);
+}
+
+function editeurBrouillon(it){
+  const c = etat.createur;
+  $('#editor').innerHTML = `
+  <div class="grid">
+    <div><video src="${API}/api/video/${it.id}" controls playsinline></video>
+      <p class="hint">${it.duree?it.duree+' s':''}</p></div>
+    <div class="panel">
+      <p class="soft">Sending to the TikTok inbox of</p>
+      <div class="acct" style="margin:6px 0 4px"><img src="${c.creator_avatar_url||''}" alt=""><div><b>${c.creator_nickname}</b><span class="soft">@${c.creator_username}</span></div></div>
+      <label class="f" for="legende">Caption</label>
+      <textarea id="legende" maxlength="2200">${it.legende.replace(/</g,'&lt;')}</textarea>
+      <button class="btn ghost" id="copy" type="button" style="margin-top:10px">Copy caption</button>
+      <p class="legal">The video is sent to your TikTok inbox as a draft. Open the notification in the TikTok app to add a sound, paste the caption, choose who can view it, set the content disclosure if it promotes our products, and post. Nothing is published until you post it in TikTok.</p>
+      <p class="hint">This video was generated with AI; turn on the AI-generated content label when you post it.</p>
+      <div class="actions"><button class="btn" id="send" type="button">Send to TikTok inbox</button><button class="btn ghost" id="rej" type="button">Reject</button></div>
+      <div class="msg" id="msg" role="status"></div>
+    </div>
+  </div>`;
+  $('#copy').onclick = () => navigator.clipboard.writeText($('#legende').value).then(()=>{ $('#copy').textContent='Caption copied'; }).catch(()=>{ $('#legende').select(); });
+  $('#rej').onclick = async () => { await api('/api/rejeter', {id: it.id}); charger(); };
+  $('#send').onclick = async () => {
+    const m = $('#msg'); m.classList.add('on'); m.textContent = 'Uploading to TikTok…'; $('#send').disabled = true;
+    try {
+      const r = await api('/api/publier', {id: it.id, legende: $('#legende').value, mode: 'brouillon'});
+      m.textContent = 'Sent. Check the notification in the TikTok app to finish and post your video.';
+    } catch(e){ m.textContent = 'Not sent: ' + e.message; $('#send').disabled = false; }
+  };
+}
+
+function editeurDirect(it){
   const c = etat.createur;
   const trop = it.duree && c.max_video_post_duration_sec && it.duree > c.max_video_post_duration_sec;
   const opts = (c.privacy_level_options||[]).map(o=>`<option value="${o}">${VIS[o]||o}</option>`).join('');
