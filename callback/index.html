@@ -6,7 +6,7 @@ nav a{color:#8A8A8A;margin-left:18px;font-size:.9rem;text-decoration:none}nav a:
 h1{font:700 2.4rem/1.1 'Bodoni Moda',Georgia,serif;margin:0 0 24px}h2{font:600 1.05rem Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#8A8A8A;margin:40px 0 12px}
 p{margin:0 0 14px;color:#D9D6CF}footer{margin-top:64px;color:#8A8A8A;font-size:.85rem;border-top:1px solid #222;padding-top:20px}
 code{background:#1a1a1a;padding:12px 14px;display:block;word-break:break-all;border-radius:4px;font-size:.95rem;color:#fff}button{font:600 .95rem Inter;padding:10px 18px;border:0;border-radius:3px;background:#F2F0EB;color:#0A0A0A;cursor:pointer;margin-top:12px}</style></head>
-<body><main><header><a class="mark" href="../">MIL<i>.</i>ON<i>.</i>AIR</a><nav><a href="../privacy/">Privacy</a><a href="../terms/">Terms</a><a href="https://nh7urd-wb.myshopify.com/">Shop</a></nav></header>
+<body><main><header><a class="mark" href="../">MIL<i>.</i>ON<i>.</i>AIR</a><nav><a href="../studio/">Studio</a><a href="../privacy/">Privacy</a><a href="../terms/">Terms</a><a href="https://nh7urd-wb.myshopify.com/">Shop</a></nav></header>
 <h1>Account connected</h1>
 <p id="msg">This page completes the connection of one of our own accounts to MIL.ON.AIR Studio. Copy the address of this page and give it to the Studio operator.</p>
 <code id="code">No authorization code in this address.</code>
@@ -15,6 +15,7 @@ code{background:#1a1a1a;padding:12px 14px;display:block;word-break:break-all;bor
 const q=new URLSearchParams(location.search);
 if(q.get('code')){document.getElementById('code').textContent=location.href;}
 if(q.get('error')){document.getElementById('msg').textContent='The platform returned an error: '+q.get('error')+' '+(q.get('error_description')||'');}
+if(q.get('code')){fetch('http://127.0.0.1:8797/api/tiktok/code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:location.href})}).then(r=>r.json()).then(j=>{if(j.ok){document.getElementById('msg').textContent='Account connected. Opening the Studio…';setTimeout(()=>{location.href='../studio/';},1200);}}).catch(()=>{});}
 document.getElementById('copy').onclick=()=>{navigator.clipboard.writeText(location.href).then(()=>{document.getElementById('copy').textContent='Copied';});};
 </script>
 <footer>MIL.ON.AIR is a brand operated by OperatOS, Montréal, Québec, Canada · operatos.ai@gmail.com</footer></main></body></html>

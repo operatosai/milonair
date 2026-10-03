@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Studio · MIL.ON.AIR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#0A0A0A;--panel:#141414;--line:#262626;--ink:#F2F0EB;--soft:#9A968E;--red:#FF1E1E;--ok:#3DDC84}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,Helvetica,Arial,sans-serif}
+main{max-width:1040px;margin:0 auto;padding:32px 20px 64px}
+header{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:28px}
+.mark{font:700 1.4rem 'Bodoni Moda',Georgia,serif;letter-spacing:.04em;text-decoration:none;color:var(--ink)}.mark i{color:var(--red);font-style:normal}
+.mark small{font:500 .7rem Inter;letter-spacing:.2em;text-transform:uppercase;color:var(--soft);margin-left:10px}
+h1{font:700 2rem/1.15 'Bodoni Moda',Georgia,serif;margin:0 0 6px}p{margin:0}.soft{color:var(--soft)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:22px}
+.btn{font:600 .95rem Inter;padding:12px 20px;border:0;border-radius:4px;cursor:pointer;background:var(--ink);color:#0A0A0A}
+.btn:disabled{opacity:.35;cursor:not-allowed}.btn.ghost{background:transparent;color:var(--ink);border:1px solid #444}
+.btn.tt{display:inline-flex;align-items:center;gap:10px}
+.btn:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.acct{display:flex;align-items:center;gap:12px}.acct img{width:44px;height:44px;border-radius:50%}
+.acct b{display:block}.grid{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:28px;margin-top:24px}
+video{width:100%;aspect-ratio:9/16;background:#000;border-radius:6px;object-fit:cover}
+label.f{display:block;font-weight:600;margin:18px 0 8px}
+select,textarea{width:100%;font:inherit;color:var(--ink);background:#0d0d0d;border:1px solid #333;border-radius:4px;padding:10px 12px}
+textarea{min-height:84px;resize:vertical}
+.row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.row.off{opacity:.45}
+.sw{position:relative;width:44px;height:24px;flex:none}.sw input{opacity:0;width:0;height:0}
+.sw span{position:absolute;inset:0;background:#333;border-radius:24px;transition:background .15s}
+.sw span::before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .15s}
+.sw input:checked+span{background:var(--ok)}.sw input:checked+span::before{transform:translateX(20px)}
+.sw input:disabled+span{opacity:.4}
+.sub{margin:8px 0 0 0;padding:12px;border:1px solid var(--line);border-radius:4px;display:none}.sub.on{display:block}
+.sub label{display:flex;gap:10px;align-items:flex-start;margin:6px 0}.hint{font-size:.85rem;color:var(--soft);margin-top:6px}
+.legal{font-size:.85rem;color:var(--soft);margin:18px 0}.legal a{color:var(--ink)}
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+.msg{margin-top:14px;padding:12px 14px;border-radius:4px;background:#1b1b1b;display:none}.msg.on{display:block}
+.queue{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.queue button{background:#1b1b1b;color:var(--ink);border:1px solid #333;border-radius:4px;padding:8px 12px;cursor:pointer;font:inherit}
+.queue button[aria-pressed=true]{border-color:var(--ink)}
+.empty{padding:40px 0;color:var(--soft)}
+@media (max-width:760px){.grid{grid-template-columns:1fr}video{max-width:320px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <a class="mark" href="../">MIL<i>.</i>ON<i>.</i>AIR<small>Studio</small></a>
+  <div id="acct" class="acct"></div>
+</header>
+
+<section id="login" class="panel" hidden>
+  <h1>Connect our TikTok account</h1>
+  <p class="soft" style="margin:8px 0 18px">MIL.ON.AIR Studio publishes our own brand videos to our own TikTok account, after a person on our team reviews and approves each video.</p>
+  <button class="btn tt" id="btnLogin" type="button">Continue with TikTok</button>
+</section>
+
+<section id="local" class="panel" hidden>
+  <h1>Studio offline</h1>
+  <p class="soft" style="margin-top:8px">The Studio runs on our team's computer. Start the Ultron publishing service, then reload this page.</p>
+</section>
+
+<section id="studio" hidden>
+  <h1>Review and post</h1>
+  <p class="soft">Videos waiting for approval. Nothing is posted until you press Post.</p>
+  <div class="queue" id="queue"></div>
+  <div id="editor"></div>
+</section>
+</main>
+
+<script>
+const API = 'http://127.0.0.1:8797';
+const VIS = {PUBLIC_TO_EVERYONE:'Everyone', MUTUAL_FOLLOW_FRIENDS:'Friends', FOLLOWER_OF_CREATOR:'Followers', SELF_ONLY:'Only me'};
+let etat = null, choisi = null;
+const $ = s => document.querySelector(s);
+
+async function api(path, body){
+  const r = await fetch(API + path, body ? {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)} : {});
+  const j = await r.json(); if(!r.ok) throw new Error(j.erreur || j.message || r.status); return j;
+}
+
+async function charger(){
+  try { etat = await api('/api/etat'); } catch(e){ $('#local').hidden = false; return; }
+  $('#local').hidden = true;
+  if(!etat.connecte){ $('#login').hidden = false; $('#studio').hidden = true; $('#acct').innerHTML=''; return; }
+  $('#login').hidden = true; $('#studio').hidden = false;
+  const c = etat.createur;
+  $('#acct').innerHTML = `<img src="${c.creator_avatar_url||''}" alt=""><div><b>${c.creator_nickname||''}</b><span class="soft">@${c.creator_username||''}</span></div>`;
+  const q = $('#queue'); q.innerHTML = '';
+  const att = etat.file.filter(x => x.statut === 'en_attente');
+  if(!att.length){ $('#editor').innerHTML = '<p class="empty">No video waiting for approval.</p>'; return; }
+  if(!choisi || !att.find(x=>x.id===choisi)) choisi = att[0].id;
+  att.forEach(x => { const b=document.createElement('button'); b.type='button'; b.textContent=x.id; b.setAttribute('aria-pressed', x.id===choisi); b.onclick=()=>{choisi=x.id; charger();}; q.appendChild(b); });
+  editeur(att.find(x=>x.id===choisi));
+}
+
+function editeur(it){
+  const c = etat.createur;
+  const trop = it.duree && c.max_video_post_duration_sec && it.duree > c.max_video_post_duration_sec;
+  const opts = (c.privacy_level_options||[]).map(o=>`<option value="${o}">${VIS[o]||o}</option>`).join('');
+  const sw = (id, nom, desac) => `<div class="row ${desac?'off':''}"><span>${nom}${desac?' <span class="soft">(turned off in your TikTok settings)</span>':''}</span><label class="sw"><input type="checkbox" id="${id}" ${desac?'disabled':'checked'}><span></span></label></div>`;
+  $('#editor').innerHTML = `
+  <div class="grid">
+    <div><video src="${API}/api/video/${it.id}" controls playsinline></video>
+      <p class="hint">${it.duree?it.duree+' s':''}${trop?' · too long for this account':''}</p></div>
+    <div class="panel">
+      <p class="soft">Posting to</p>
+      <div class="acct" style="margin:6px 0 4px"><img src="${c.creator_avatar_url||''}" alt=""><div><b>${c.creator_nickname}</b><span class="soft">@${c.creator_username}</span></div></div>
+      <label class="f" for="legende">Caption</label>
+      <textarea id="legende" maxlength="2200">${it.legende.replace(/</g,'&lt;')}</textarea>
+      <label class="f" for="vis">Who can view this video</label>
+      <select id="vis"><option value="" selected disabled>Select privacy</option>${opts}</select>
+      <label class="f">Allow users to</label>
+      ${sw('com','Comment',c.comment_disabled)}${sw('duo','Duet',c.duet_disabled)}${sw('col','Stitch',c.stitch_disabled)}
+      <div class="row"><span>Disclose video content <span class="soft">(promotes a brand, product or service)</span></span><label class="sw"><input type="checkbox" id="disc"><span></span></label></div>
+      <div class="sub" id="discBox">
+        <label><input type="checkbox" id="moi"> <span><b>Your brand</b><br><span class="soft">You are promoting yourself or your own business. The video will be labeled "Promotional content".</span></span></label>
+        <label><input type="checkbox" id="tiers"> <span><b>Branded content</b><br><span class="soft">You are promoting another brand or a third party. The video will be labeled "Paid partnership".</span></span></label>
+        <p class="hint" id="discHint"></p>
+      </div>
+      <label class="f">Post as</label>
+      <select id="mode"><option value="direct">Post directly to the profile</option><option value="brouillon">Send to TikTok inbox as a draft</option></select>
+      <p class="legal" id="legal"></p>
+      <p class="hint">This video was generated with AI and will be labeled as AI-generated content.</p>
+      <div class="actions"><button class="btn" id="post" type="button" disabled>Post</button><button class="btn ghost" id="rej" type="button">Reject</button></div>
+      <div class="msg" id="msg" role="status"></div>
+    </div>
+  </div>`;
+  $('#mode').value = etat.mode === 'direct' ? 'direct' : 'brouillon';
+  const maj = () => {
+    const disc = $('#disc').checked, moi = $('#moi').checked, tiers = $('#tiers').checked, vis = $('#vis').value;
+    $('#discBox').classList.toggle('on', disc);
+    const priv = $('#vis').querySelector('option[value="SELF_ONLY"]');
+    if(priv){ priv.disabled = disc && tiers; if(priv.disabled && vis==='SELF_ONLY'){ $('#vis').value=''; } }
+    $('#discHint').textContent = disc && !moi && !tiers ? 'You need to indicate if your content promotes yourself, a third party, or both.' : (disc && tiers ? 'Branded content visibility cannot be set to private.' : '');
+    $('#legal').innerHTML = tiers
+      ? 'By posting, you agree to TikTok\'s <a href="https://www.tiktok.com/legal/page/global/bc-policy/en" target="_blank" rel="noopener">Branded Content Policy</a> and <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener">Music Usage Confirmation</a>.'
+      : 'By posting, you agree to TikTok\'s <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener">Music Usage Confirmation</a>.';
+    $('#post').disabled = !$('#vis').value || (disc && !moi && !tiers) || trop;
+  };
+  ['#vis','#disc','#moi','#tiers'].forEach(s => $(s).addEventListener('change', maj)); maj();
+  $('#rej').onclick = async () => { await api('/api/rejeter', {id: it.id}); charger(); };
+  $('#post').onclick = async () => {
+    const m = $('#msg'); m.classList.add('on'); m.textContent = 'Posting… TikTok may take a few minutes to process the video.'; $('#post').disabled = true;
+    try {
+      const r = await api('/api/publier', {id: it.id, legende: $('#legende').value, visibilite: $('#vis').value,
+        commentaires: $('#com').checked, duo: $('#duo').checked, collage: $('#col').checked,
+        votre_marque: $('#disc').checked && $('#moi').checked, contenu_de_marque: $('#disc').checked && $('#tiers').checked, mode: $('#mode').value});
+      m.textContent = r.message.replace(/^✅ /,'') + ' It may take a few minutes before the video appears on the profile.';
+    } catch(e){ m.textContent = 'Not posted: ' + e.message; $('#post').disabled = false; }
+  };
+}
+
+$('#btnLogin').onclick = async () => { const r = await api('/api/tiktok/lien', {}); sessionStorage.setItem('retour','studio'); location.href = r.url; };
+charger();
+</script>
+</body>
+</html>
