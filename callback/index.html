@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Connection · MIL.ON.AIR Studio</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0A0A0A;color:#F2F0EB;font:16px/1.65 Inter,Helvetica,Arial,sans-serif}
+main{max-width:760px;margin:0 auto;padding:48px 20px 80px}a{color:#F2F0EB}header{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:48px}
+.mark{font:700 1.5rem 'Bodoni Moda',Georgia,serif;letter-spacing:.04em;text-decoration:none}.mark i{color:#FF1E1E;font-style:normal}
+nav a{color:#8A8A8A;margin-left:18px;font-size:.9rem;text-decoration:none}nav a:hover{color:#F2F0EB}
+h1{font:700 2.4rem/1.1 'Bodoni Moda',Georgia,serif;margin:0 0 24px}h2{font:600 1.05rem Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#8A8A8A;margin:40px 0 12px}
+p{margin:0 0 14px;color:#D9D6CF}footer{margin-top:64px;color:#8A8A8A;font-size:.85rem;border-top:1px solid #222;padding-top:20px}
+code{background:#1a1a1a;padding:12px 14px;display:block;word-break:break-all;border-radius:4px;font-size:.95rem;color:#fff}button{font:600 .95rem Inter;padding:10px 18px;border:0;border-radius:3px;background:#F2F0EB;color:#0A0A0A;cursor:pointer;margin-top:12px}</style></head>
+<body><main><header><a class="mark" href="../">MIL<i>.</i>ON<i>.</i>AIR</a><nav><a href="../privacy/">Privacy</a><a href="../terms/">Terms</a><a href="https://nh7urd-wb.myshopify.com/">Shop</a></nav></header>
+<h1>Account connected</h1>
+<p id="msg">This page completes the connection of one of our own accounts to MIL.ON.AIR Studio. Copy the address of this page and give it to the Studio operator.</p>
+<code id="code">No authorization code in this address.</code>
+<button id="copy" type="button">Copy the full address</button>
+<script>
+const q=new URLSearchParams(location.search);
+if(q.get('code')){document.getElementById('code').textContent=location.href;}
+if(q.get('error')){document.getElementById('msg').textContent='The platform returned an error: '+q.get('error')+' '+(q.get('error_description')||'');}
+document.getElementById('copy').onclick=()=>{navigator.clipboard.writeText(location.href).then(()=>{document.getElementById('copy').textContent='Copied';});};
+</script>
+<footer>MIL.ON.AIR is a brand operated by OperatOS, Montréal, Québec, Canada · operatos.ai@gmail.com</footer></main></body></html>
